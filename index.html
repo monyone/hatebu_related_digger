@@ -121,7 +121,7 @@
 
 						beforeSend: function(xhr, settings) {
 							inject.empty();
-							inject.append("<img src=\"loading.gif\">");
+							inject.append("<img style=\"padding-top: 5px;\" src=\"loading.gif\">");
 							inject.slideDown();
 							toggle.toggleClass("open", true);
 						},
