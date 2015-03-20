@@ -88,9 +88,23 @@
 		</script>
 
 		<script>
-
-
 			jQuery(function($) {
+				var escapeHTML = function( text ) {
+    			var replacement = function( ch ) {
+        		var characterReference = {
+            	'"':'&quot;',
+            	'&':'&amp;',
+            	'\'':'&#39;',
+            	'<':'&lt;',
+            	'>':'&gt;'
+        		};
+
+        		return characterReference[ ch ];
+					}
+
+					return text.replace( /["&'<>]/g, replacement );
+				}
+
 				$("#url-form").find('[name=url]').textGrow(
 					{
 						pad: 1
@@ -132,6 +146,8 @@
 
 							for(var i = 0; i < result['related'].length; i++){
 								var entry = result['related'][i];
+								entry['title'] = escapeHTML(entry['title']);
+
 								var appended = $("#relatedEntryTemplate").render(entry);
 
 								inject.append(appended);
