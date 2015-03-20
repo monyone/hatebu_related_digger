@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="ja">
+	<head>
+		<meta charset="UTF-8">
+
+		<!-- jquery -->
+		<script src="./static/jquery/jquery-2.1.3.min.js"></script>
+
+		<!-- JsRender -->
+		<script src="./static/jsrender/jsrender.min.js"></script>
+
+		<!-- textgrow -->
+		<script src="./static/textgrow/textgrow.js"></script>
+
+		<style>
+		body{
+			margin: 0px;
+			background-color: #F8F8F8;
+		}
+		li {
+			list-style: none;
+		}
+		li ul{
+			display:none;
+		}
+		.toggle {
+			display: block;
+			position: relative;
+			padding: 3px;
+			text-decoration: none;
+			color: #333333;
+			background-color: #ECF0F1;
+			border-top-left-radius: 10px;
+			border-bottom-left-radius: 10px;
+			cursor: pointer;
+			-webkit-transition: .2s ease-in-out;
+		}
+		.toggle:before {
+			display: block;
+			content: "";
+			width: 5px;
+			height: 5px;
+			position: absolute;
+			top: 50%;
+			left: 0px;
+			margin-top: -5px;
+			border-top: solid 3px #00A5DE;
+			border-right: solid 3px #00A5DE;
+			transform: rotate(45deg);
+			margin-left: -15px;
+			-webkit-transform: rotate(45deg);
+			-webkit-transition: .2s ease-in-out;
+		}
+		.toggle.open:before {
+			transform: rotate(135deg);
+			-webkit-transform: rotate(135deg);
+		}
+		.header {
+			padding: 2px;
+			padding-top: 10px;
+			padding-left: 5px;
+			height: 36px;
+			font-size: 20px;
+			font-weight: bold;
+			color: #FFFFFF;
+			background-color: #59ABE3;
+		}
+		.form-header{
+			padding-left: 5px;
+			background-color: #D2D7D3;
+			border-bottom: 1px solid #EEE;
+		}
+		</style>
+
+		<!-- Template -->
+		<script id="relatedEntryTemplate" type="text/x-jsrender">
+		<li>
+			<span class="toggle">
+				<a href="{{:url}}">
+					{{:title}}
+				</a>
+				<a href="{{:entry_url}}">
+					<img src="http://b.hatena.ne.jp/entry/image/{{:url}}">
+				</a>
+			</span>
+			<ul></ul>
+		</li>
+		</script>
+
+		<script>
+
+
+			jQuery(function($) {
+				$("#url-form").find('[name=url]').textGrow(
+					{
+						pad: 1
+					}
+				);
+				$("#url-form").submit(function(event) {
+					//
+					event.preventDefault();
+
+					//
+					var $form = $(this);
+					var $url = $form.find('[name=url]')
+					var $button = $form.find('button');
+
+					ajax_request($("#start-list"), $url.val());
+				});
+
+				<!-- Ajax -->
+				var ajax_request = function(clicked, url) {
+					var toggle = clicked;
+					var inject = clicked.next("ul");
+
+					$.ajax({
+						url: "http://b.hatena.ne.jp/entry/json/",
+						dataType: 'jsonp',
+						type: "GET",
+						data: "url=" + encodeURIComponent(url),
+
+						beforeSend: function(xhr, settings) {
+							inject.empty();
+							inject.append("<img src=\"loading.gif\">");
+							inject.slideDown();
+							toggle.toggleClass("open", true);
+						},
+						complete: function(xhr, settings) {},
+						success: function(result, textStatus, xhr) {
+							inject.empty();
+							if(result === null){return;}
+
+							for(var i = 0; i < result['related'].length; i++){
+								var entry = result['related'][i];
+								var appended = $("#relatedEntryTemplate").render(entry);
+
+								inject.append(appended);
+							}
+							inject.slideDown();
+							toggle.toggleClass("open", true);
+							//console.log(toggle.children("a"));
+
+							inject.children("li").children(".toggle").children("a").click(function(event) {
+								event.stopImmediatePropagation();
+							});
+
+							inject.children("li").children(".toggle").click(function(event) {
+								if($(this).next("ul").children().length < 1){
+									var url = $(this).children("a").attr("href");
+
+									ajax_request($(this), url);
+								}else{
+									$(this).next("ul").slideToggle();
+									$(this).toggleClass("open");
+								}
+
+								event.stopImmediatePropagation();
+							});
+						},
+						error: function(xhr, textStatus, error) {}
+					});
+				}
+			})
+		</script>
+
+		<title>Hatebu Related Digger</title>
+	</head>
+
+	<body>
+		<!-- navigation bar -->
+		<div class="header">
+			Hatebu Related Digger
+		</div>
+		<div class="form-header">
+			<form id="url-form">
+				<input type="text" name="url" placeholder="http://" style="min-width:180px;">
+				<button type="submit">Show</button>
+			</form>
+		</div>
+
+		<div id="page-top"></div>
+
+		<div id="content">
+			<div id="start-list"></div>
+			<ul></ul>
+		</div>
+	</body>
+</html>
